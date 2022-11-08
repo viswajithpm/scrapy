@@ -5,5 +5,18 @@ class MytheresaSpider(scrapy.Spider):
     start_urls=['https://www.mytheresa.com/int_en/men/shoes.html']
     
     def parse(self,response):
-        for products in response.xpath('/html/body/div[1]/div/div[2]/div[2]/div[2]/div[2]/div/div/div[7]/ul'):
-            yield {'link':products.xpath('li/a[1]/@href').getall()}
+        for link in response.xpath('//a[contains(@class,"product-image")]/@href'):
+            yield response.follow(link.get(),callback=self.parse_item)
+    def parse_item(self,response):
+            yield{
+                
+                'breadcrumbs':response.xpath('//div[contains(@class,"breadcrumbs")]/ul/li/a/span/text()').getall(),
+                'img_url':response.css('img.gallery-image').xpath('@src').get(),
+                'brand':response.xpath('//div[contains(@class,"product-designer")]/span/a/text()').get(),
+                'product_name':response.xpath('//div[contains(@class,"product-name")]/span/text()').get(),
+                'price':response.xpath('//div[contains(@class,"price-info pa1-rmm-price")]/div/span/span/text()').get(),
+                'product_id':response.xpath('//div[contains(@class,"product-sku pa1-rm-tax")]/span/text()').get().replace('item no.\xa0',''),
+                'sizes':response.xpath('//ul[contains(@class,"sizes")]/li/a/span/text()').getall(),
+                'description': response.xpath('//p[contains(@class,"pa1-rmm product-description")]/text()').get(),
+                'other_images':response.css('img.lazyload').xpath('@data-src').getall()
+        }
