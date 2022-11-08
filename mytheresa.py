@@ -7,6 +7,10 @@ class MytheresaSpider(scrapy.Spider):
     def parse(self,response):
         for link in response.xpath('//a[contains(@class,"product-image")]/@href'):
             yield response.follow(link.get(),callback=self.parse_item)
+            
+        next_page=response.xpath('//li[contains(@class,"next")]/a/@href').get()
+        if next_page is not None:
+            yield response.follow(next_page,callback=self.parse)
     def parse_item(self,response):
             yield{
                 
